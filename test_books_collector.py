@@ -1,27 +1,33 @@
 import pytest
 from main import BooksCollector
 
-
-
 # --- add_new_book ---
 
 
 @pytest.mark.parametrize(
-    'name, should_add',
+    'name',
     [
-        ('Хоббит', True),          # обычное имя
-        ('x' * 40, True),          # граничное значение: 40 символов
-        ('', False),               # пустое имя
-        ('x' * 41, False),         # 41 символ
+        'Хоббит',     # обычное имя
+        'x' * 40,     # граничное: 40 символов
     ]
 )
-def test_add_new_book_name_length_and_empty(collector, name, should_add):
+def test_add_new_book_valid_names_added(collector, name):
     collector.add_new_book(name)
 
-    if should_add:
-        assert name in collector.get_books_genre()
-    else:
-        assert name not in collector.get_books_genre()
+    assert name in collector.get_books_genre()
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        '',           # пустое имя
+        'x' * 41,     # 41 символ
+    ]
+)
+def test_add_new_book_invalid_names_not_added(collector, name):
+    collector.add_new_book(name)
+
+    assert name not in collector.get_books_genre()
 
 
 def test_add_new_book_duplicate_not_added_twice(collector):
@@ -101,17 +107,27 @@ def test_books_with_age_rating_not_in_children_list(collector):
 # --- add_book_in_favorites + delete_book_from_favorites + get_list_of_favorites_books ---
 
 
-def test_add_and_delete_book_in_favorites_flow(collector):
+def test_add_book_in_favorites_not_duplicated(collector):
     collector.add_new_book('Дюна')
     collector.add_new_book('История игрушек')
 
     collector.add_book_in_favorites('Дюна')
     collector.add_book_in_favorites('История игрушек')
-    collector.add_book_in_favorites('Дюна')  # повторно, не должен продублироваться
+    collector.add_book_in_favorites('Дюна')  # повторно
 
     favorites = collector.get_list_of_favorites_books()
+
     assert len(favorites) == 2
-    assert 'Дюна' in favorites and 'История игрушек' in favorites
+    assert 'Дюна' in favorites
+    assert 'История игрушек' in favorites
+
+
+def test_delete_book_from_favorites_removes_only_target(collector):
+    collector.add_new_book('Дюна')
+    collector.add_new_book('История игрушек')
+
+    collector.add_book_in_favorites('Дюна')
+    collector.add_book_in_favorites('История игрушек')
 
     collector.delete_book_from_favorites('Дюна')
     favorites_after_delete = collector.get_list_of_favorites_books()
